@@ -2,8 +2,8 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>LOK PARTY管家看房计时器</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<title>LOK PARTY计时系统</title>
 <link rel="stylesheet" href="css/font-awesome.min.css">
 <style>
     * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -35,11 +35,18 @@
     .brand .logo { width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.22);color:#fff;display:flex;align-items:center;justify-content:center;font-size:19px;flex:none; box-shadow:0 4px 12px rgba(0,0,0,.16); }
     .brand .t { font-size:17px;font-weight:800;white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:44vw; color:#fff; }
     .brand .sub { font-size:11px;color:rgba(255,255,255,.85);white-space:nowrap; }
-    .top-right { display:flex;align-items:center;gap:8px; }
+    .top-right { display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end; }
     .clock { font-size:13px;color:#fff;font-weight:600;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.2);padding:6px 11px;border-radius:20px;white-space:nowrap; }
     .icon-btn { width:36px;height:36px;border-radius:11px;background:rgba(255,255,255,.2);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;transition:.15s; }
     .icon-btn.active { color:#fff; } .icon-btn:active { transform:scale(.94); }
     .icon-btn.locked{background:var(--surface-2);color:var(--danger);border:1px solid var(--danger);}
+    /* ===== 页面缩放控件 ===== */
+    .zoom-ctl { display:flex;align-items:center;gap:2px;background:rgba(255,255,255,.2);border-radius:12px;padding:2px;flex:none; }
+    .zoom-ctl button { width:28px;height:32px;border-radius:9px;background:transparent;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;transition:.15s; }
+    .zoom-ctl button:active { transform:scale(.9);background:rgba(255,255,255,.25); }
+    .zoom-ctl .zval { width:50px;font-size:12.5px;font-weight:800;letter-spacing:.3px;font-variant-numeric:tabular-nums; }
+    .zoom-row { display:flex;align-items:center;gap:8px;flex-wrap:wrap; }
+    .zoom-row b { min-width:62px;text-align:center;font-size:17px;font-weight:800;color:var(--primary);font-variant-numeric:tabular-nums; }
     .page { display:none; } .page.active { display:block; }
     .page-h { display:flex; align-items:center; justify-content:space-between; margin:6px 4px 12px; }
     .page-h .tt { font-size:17px;font-weight:800;display:flex;align-items:center;gap:8px; } .page-h .tt i { color:var(--primary); }
@@ -251,10 +258,15 @@
 <div class="topbar">
     <div class="brand" onclick="goToPage('home')">
         <div class="logo"><i class="fa fa-hourglass-half"></i></div>
-        <div><div class="t" id="sysNameText">LOK PARTY管家看房计时器</div><div class="sub">房台配置 · 到钟提醒</div></div>
+        <div><div class="t" id="sysNameText">LOK PARTY计时系统</div><div class="sub">房台配置 · 到时间提醒</div></div>
     </div>
     <div class="top-right">
         <div class="clock"><i class="fa fa-clock-o"></i><span id="clockTime">--:--:--</span></div>
+        <div class="zoom-ctl" title="页面缩放：Ctrl + 鼠标滚轮，或 Ctrl + 加减号，Ctrl + 0 恢复">
+            <button onclick="zoomStep(-1)" title="缩小"><i class="fa fa-minus"></i></button>
+            <button class="zval" id="zoomVal" onclick="zoomReset()" title="点击恢复 100%">100%</button>
+            <button onclick="zoomStep(1)" title="放大"><i class="fa fa-plus"></i></button>
+        </div>
         <button class="icon-btn" id="themeBtn" title="切换皮肤"><i class="fa fa-paint-brush"></i></button>
         <button class="icon-btn" id="soundToggleBtn" title="提示音开关"><i class="fa fa-volume-up"></i></button>
     </div>
@@ -309,12 +321,22 @@
     <div class="apage active" id="ap-sys">
         <div class="set-card">
             <div class="hd"><i class="fa fa-tag"></i> 系统名称 / 店名</div>
-            <div class="sys-form"><input type="text" id="sysNameInput" placeholder="如：LOK PARTY管家看房计时器"><button class="btn primary" onclick="saveSysName()"><i class="fa fa-check"></i> 保存</button></div>
+            <div class="sys-form"><input type="text" id="sysNameInput" placeholder="如：LOK PARTY计时系统"><button class="btn primary" onclick="saveSysName()"><i class="fa fa-check"></i> 保存</button></div>
         </div>
         <div class="set-card">
             <div class="hd"><i class="fa fa-paint-brush"></i> 界面皮肤（主页可直接切换）</div>
             <div class="set-tips">选择喜欢的配色方案，选择后立即生效并保存。</div>
             <div class="theme-grid" id="themeGrid"></div>
+        </div>
+        <div class="set-card">
+            <div class="hd"><i class="fa fa-search-plus"></i> 页面缩放（窗口字太小 / 太大时用）</div>
+            <div class="set-tips">整体放大或缩小页面，设置会自动保存。快捷键：<b>Ctrl + 鼠标滚轮</b> 缩放，<b>Ctrl + +</b> 放大，<b>Ctrl + -</b> 缩小，<b>Ctrl + 0</b> 恢复 100%。范围 60% ~ 200%。</div>
+            <div class="zoom-row">
+                <button class="btn" onclick="zoomStep(-1)"><i class="fa fa-minus"></i> 缩小</button>
+                <b id="zoomVal2">100%</b>
+                <button class="btn" onclick="zoomStep(1)"><i class="fa fa-plus"></i> 放大</button>
+                <button class="btn primary" onclick="zoomReset()"><i class="fa fa-refresh"></i> 恢复 100%</button>
+            </div>
         </div>
         <div class="set-card">
             <div class="hd"><i class="fa fa-database"></i> 数据保留天数</div>
@@ -397,11 +419,24 @@
             </div>
         </div>
         <div class="set-card">
-            <div class="hd"><i class="fa fa-hdd-o"></i> 本地数据文件（不怕清缓存 / 浏览器坏）</div>
-            <div class="set-tips">在电脑上指定一个目录（如 D:\mzdata）生成数据文件后，系统每次保存都会<strong>自动同步写入</strong>该文件，启动时<strong>优先读取本地数据</strong>——即使浏览器数据被清空、软件重装也能恢复。</div>
+            <div class="hd"><i class="fa fa-database"></i> Microsoft Access 数据库（把数据长期存成数据库）</div>
+            <div class="set-tips">点「导出 Access 数据表」会导出 <strong>8 张 CSV 数据表</strong>和一个 <strong>生成Access数据库.vbs</strong>，全部存到上面设置的<strong>数据库目录</strong>（和数据文件同目录）。到电脑上<strong>双击那个 .vbs</strong>，就在同目录生成 <code>倒计时数据库.accdb</code>，8 张表一次灌好，双击即可用 Access 打开。<br>CSV 也能直接在 Access 里用「外部数据 → 文本文件」导入或链接，任何装了 Office 的电脑都能用；本机没装 Access 引擎时脚本会给出明确提示，不影响系统正常使用。</div>
+            <div class="btn-row">
+                <button class="btn primary" onclick="exportAccess()"><i class="fa fa-database"></i> 导出 Access 数据表</button>
+                <button class="btn" onclick="exportExcel()"><i class="fa fa-file-excel-o"></i> 导出Excel报表</button>
+            </div>
+        </div>
+        <div class="set-card">
+            <div class="hd"><i class="fa fa-hdd-o"></i> 数据库目录 / 本地数据文件（不怕清缓存 / 浏览器坏）</div>
+            <div class="set-tips">软件会<strong>自动选择最好的保存方式</strong>：打包成 EXE 后，若程序开放了原生文件能力，则<strong>打开即自动读取、每次保存自动写入</strong>，不需要任何授权弹窗、不用点任何按钮；若没有原生能力，则回退到「指定目录写入」方式（此时受浏览器安全机制限制，每次打开需确认一次授权）。<br>下方「EXE 原生写入」一行会显示当前检测结果与数据文件位置。此外随时可用上方「一键导出」备份为 JSON 文件。<br><strong>想把数据放到 D 盘 / E 盘</strong>：先在资源管理器里建好文件夹（例如 <code>E:\mzdata</code>），把路径填进下面输入框，点「应用位置」即可；这里同时也是<strong>数据库目录</strong>——「导出 Access 数据表」导出的 CSV 与建库脚本、以及各种导出文件都会存到这里。若该位置<strong>不可写</strong>（打包程序未放开该磁盘的权限），会显示具体原因并自动回退到程序数据目录，数据不会丢。</div>
             <div class="local-status" id="localStatus" style="font-size:13px;line-height:1.8;margin:6px 0 2px">检测中...</div>
+            <div class="btn-row" id="dataDirRow" style="margin-top:8px;display:none">
+                <input type="text" id="dataDirInput" placeholder="自定义数据文件位置，如 E:\mzdata（留空 = 程序数据目录）" style="flex:1;min-width:220px" autocomplete="off">
+                <button class="btn" onclick="applyDataDir()"><i class="fa fa-check"></i> 应用位置</button>
+            </div>
             <div class="btn-row" style="margin-top:8px">
-                <button class="btn primary" onclick="pickDataDir()"><i class="fa fa-folder-open-o"></i> 选择目录并生成数据文件</button>
+                <button class="btn primary" id="localRestoreBtn" onclick="restoreLocalPermission(true)" style="display:none"><i class="fa fa-refresh"></i> 恢复数据文件读写</button>
+                <button class="btn primary" id="localPickBtn" onclick="pickDataDir()"><i class="fa fa-folder-open-o"></i> 选择目录并生成数据文件</button>
                 <button class="btn danger" id="localOffBtn" onclick="disableLocalData()" style="display:none"><i class="fa fa-times"></i> 停用本地数据文件</button>
             </div>
         </div>
@@ -418,55 +453,230 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const LS_KEY='mz_v012_data';
+const LS_KEY='mz_v021_data';
+const SYS_NAME_DEFAULT='LOK PARTY计时系统';
 const THEMES={ 'th-gn':{name:'清新绿',p1:'#10b981',p2:'#34d399'}, 'th-og':{name:'灰蓝科技',p1:'#38bdf8',p2:'#6366f1'}, 'th-bk':{name:'深黑科技',p1:'#00d9ff',p2:'#3a86ff'}, 'th-pp':{name:'浪漫紫',p1:'#8b5cf6',p2:'#d946ef'}, 'th-or':{name:'活力橙',p1:'#f4620d',p2:'#ffb020'} };
-let DB={ user:'admin', pass:'admin', theme:'th-gn', rooms:[], staff:[], zones:['1区','2区','3区'], config:{alertMin:10,sound:true,sysName:'沐足房台倒计时',keepDays:90,beepSec:10}, history:[], sessions:{}, alertNotified:{}, mute:{}, dailyReports:[], alertFlags:{} };
+let DB={ user:'admin', pass:'admin', theme:'th-gn', rooms:[], staff:[], zones:['1区','2区','3区'], config:{alertMin:10,sound:true,sysName:SYS_NAME_DEFAULT,keepDays:90,beepSec:10}, history:[], sessions:{}, alertNotified:{}, mute:{}, dailyReports:[], alertFlags:{} };
 let loggedIn=false;
 function load(){
     try{
         let raw=localStorage.getItem(LS_KEY);
-        if(!raw){ raw=localStorage.getItem('mz_v011_data')||localStorage.getItem('mz_v010_data')||localStorage.getItem('mz_v009_data')||localStorage.getItem('mz_v008_data')||localStorage.getItem('mz_v007_data')||localStorage.getItem('mz_v006_data')||localStorage.getItem('mz_v005_data')||localStorage.getItem('mz_v004_data')||localStorage.getItem('mz_v003_data')||localStorage.getItem('mz_v002_data'); }
-        if(raw){ const p=JSON.parse(raw); DB=Object.assign({user:'admin',pass:'admin',theme:'th-gn',rooms:[],staff:[],config:{alertMin:10,sound:true,sysName:'沐足房台倒计时',keepDays:90,beepSec:10},history:[],sessions:{},alertNotified:{},mute:{},dailyReports:[]},p,{
+        if(!raw){ raw=localStorage.getItem('mz_v020_data')||localStorage.getItem('mz_v019_data')||localStorage.getItem('mz_v018_data')||localStorage.getItem('mz_v017_data')||localStorage.getItem('mz_v016_data')||localStorage.getItem('mz_v015_data')||localStorage.getItem('mz_v014_data')||localStorage.getItem('mz_v013_data')||localStorage.getItem('mz_v012_data')||localStorage.getItem('mz_v011_data')||localStorage.getItem('mz_v010_data')||localStorage.getItem('mz_v009_data')||localStorage.getItem('mz_v008_data')||localStorage.getItem('mz_v007_data')||localStorage.getItem('mz_v006_data')||localStorage.getItem('mz_v005_data')||localStorage.getItem('mz_v004_data')||localStorage.getItem('mz_v003_data')||localStorage.getItem('mz_v002_data'); }
+        if(raw){ const p=JSON.parse(raw); DB=Object.assign({user:'admin',pass:'admin',theme:'th-gn',rooms:[],staff:[],config:{alertMin:10,sound:true,sysName:SYS_NAME_DEFAULT,keepDays:90,beepSec:10},history:[],sessions:{},alertNotified:{},mute:{},dailyReports:[]},p,{
             rooms:p.rooms||[],
-            config:Object.assign({alertMin:10,sound:true,sysName:'沐足房台倒计时',keepDays:90,beepSec:10}, p.config||{}),
+            config:Object.assign({alertMin:10,sound:true,sysName:SYS_NAME_DEFAULT,keepDays:90,beepSec:10}, p.config||{}),
             sessions:p.sessions||{}, alertNotified:p.alertNotified||{}, mute:p.mute||{}, dailyReports:p.dailyReports||[], alertFlags:p.alertFlags||{},
         zones:(p.zones&&p.zones.length)?p.zones:['1区','2区','3区'] });
     syncRoomZones();
             normalizeSessions();
+            migrateSysName();
         }
     }catch(e){}
 }
+/* V014：系统名称/店名默认值改为「LOK PARTY计时系统」。仅当仍是旧默认名时替换一次（用户自定义名称不受影响） */
+const SYS_NAME_OLD=['沐足房台倒计时','LOK PARTY管家看房计时器','沐足'];
+function migrateSysName(){ if(DB.config._name14) return; if(SYS_NAME_OLD.indexOf(DB.config.sysName)>=0) DB.config.sysName=SYS_NAME_DEFAULT; DB.config._name14=1; }
 /* 旧版本数据兼容：sessions 统一为数组；V011 起取消暂停功能，旧的暂停中钟按剩余时间恢复计时 */
 function normalizeSessions(){ Object.keys(DB.sessions).forEach(k=>{ if(!Array.isArray(DB.sessions[k])) DB.sessions[k]=[DB.sessions[k]];
     DB.sessions[k].forEach(s=>{ if(s.paused) s.endTs=now()+Math.max(0,s.pausedRemain||0)*1000; delete s.paused; delete s.pausedRemain; }); }); }
-function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(DB)); }catch(e){ toast('保存失败：存储空间已满'); } writeLocalFile(); }
+function save(){ DB._savedAt=now(); try{ localStorage.setItem(LS_KEY, JSON.stringify(DB)); }catch(e){ toast('保存失败：存储空间已满'); } if(_nativeOk) nativeWrite(); else writeLocalFile(); }
+/* ===== V017：优先使用 EXE 原生文件接口写数据（打开即自动读写，零弹窗零点击） ===== */
+/* ===== V018：数据文件位置可自定义（如 E:\mzdata），自定义位置不可写时自动回退程序数据目录 ===== */
+let _nativeOk=false,_nativeApi=null,_nativePath='',_nativeRel=false,_nativeNote='（未检测）',_nativeBusy=false;
+function nativeApi(){
+    let T=null; try{ T=window.__TAURI__; }catch(e){ T=null; }
+    if(!T) return {ok:false,note:'当前不是 EXE 环境（未检测到 __TAURI__）'};
+    if(!T.fs||typeof T.fs.writeTextFile!=='function') return {ok:false,note:'EXE 未开放文件写入能力（fs 插件未启用）'};
+    const v2=!!(T.path&&typeof T.path.appDataDir==='function'&&typeof T.path.join==='function');
+    return {ok:true,kind:v2?'v2':'v1',T:T};
+}
+function nativeBase(){ const T=_nativeApi&&_nativeApi.T; const b=T&&T.fs&&T.fs.BaseDirectory; return (b&&typeof b.AppData==='number')?b.AppData:20; }
+function customDataDir(){ return String((DB.config&&DB.config.dataDir)||'').trim(); }
+function joinWin(dir,name){ const d=String(dir||'').replace(/[\\/]+$/,''); if(!d) return name; return d+((d.indexOf('/')>=0&&d.indexOf('\\')<0)?'/':'\\')+name; }
+async function pathJoin(dir,name){ const P=_nativeApi.T&&_nativeApi.T.path;
+    let r='';
+    if(P&&typeof P.join==='function'){ try{ r=String(await P.join(dir,name)||''); }catch(e){ r=''; } }
+    if(!r) r=joinWin(dir,name);
+    return (r.length>2&&r[1]===':')?r.replace(/\//g,'\\'):r; }
+/* 候选写入位置：自定义目录优先（若已设置），否则程序数据目录 */
+async function nativeTargets(){
+    const out=[], cd=customDataDir();
+    if(cd){
+        const file=/\.json$/i.test(cd)?cd:await pathJoin(cd,'mzdata.json');
+        out.push({label:'自定义目录',file:file,custom:true,rel:false});
+    }
+    const T=_nativeApi.T, P=T&&T.path;
+    if(_nativeApi.kind==='v2'&&P&&typeof P.appDataDir==='function'){
+        let d=''; try{ d=await P.appDataDir(); }catch(e){}
+        if(d){ out.push({label:'程序数据目录',file:await pathJoin(d,'mzdata.json'),custom:false,rel:false}); }
+    } else {
+        out.push({label:'程序数据目录',file:'mzdata.json',custom:false,rel:true});
+    }
+    return out;
+}
+async function nativeReadAt(file,rel){ const T=_nativeApi.T; return rel?await T.fs.readTextFile(file,{dir:nativeBase()}):await T.fs.readTextFile(file); }
+async function nativeWriteAt(file,txt,rel){ const T=_nativeApi.T; return rel?await T.fs.writeTextFile(file,txt,{dir:nativeBase()}):await T.fs.writeTextFile(file,txt); }
+async function nativeInit(){
+    const a=nativeApi();
+    if(!a.ok){ _nativeOk=false; _nativePath=''; _nativeNote=a.note; return false; }
+    _nativeApi=a;
+    let tg=[]; try{ tg=await nativeTargets(); }catch(e){ _nativeOk=false; _nativePath=''; _nativeNote='路径解析失败：'+((e&&e.message)||e); return false; }
+    const notes=[];
+    for(const t of tg){
+        try{ adoptLocalText(await nativeReadAt(t.file,t.rel)); }catch(e){}      /* 先读：文件存在且更新则采用 */
+        try{ await nativeWriteAt(t.file,JSON.stringify(DB),t.rel); }
+        catch(e){ notes.push(t.label+'（'+t.file+'）不可写：'+((e&&e.message)||e)); continue; }
+        _nativeOk=true; _nativePath=t.file; _nativeRel=!!t.rel;
+        _nativeNote=notes.length?(notes.join('；')+'。已回退到程序数据目录'):'';
+        return true;
+    }
+    _nativeOk=false; _nativePath=''; _nativeNote=notes.join('；')||'未找到可写位置';
+    return false;
+}
+async function nativeWrite(){
+    if(!_nativeOk||_nativeBusy) return false; _nativeBusy=true;
+    try{ await nativeWriteAt(_nativePath,JSON.stringify(DB),_nativeRel); _nativeBusy=false; return true; }
+    catch(e){ _nativeBusy=false; nativeFail(e); return false; }
+}
+async function nativeRead(){
+    if(!_nativeOk) return false;
+    try{ return adoptLocalText(await nativeReadAt(_nativePath,_nativeRel)); }
+    catch(e){ return false; }
+}
+/* 原生写入被系统拒绝：退回浏览器目录授权方式，并把原因显示出来 */
+function nativeFail(e){
+    _nativeOk=false; _nativeNote='写入被系统拒绝：'+((e&&e.message)||e);
+    renderLocalStatus();
+    if(localStorage.getItem(LOCAL_TAG)==='1') tryLoadLocal();
+}
+async function initLocalData(){
+    if(await nativeInit()){
+        renderLocalStatus();
+        if(_nativeNote) toast(_nativeNote);
+        return;
+    }
+    renderLocalStatus();
+    await tryLoadLocal();
+}
+/* 应用自定义数据文件位置：填 E:\mzdata 之类，留空则回到程序数据目录 */
+async function applyDataDir(){
+    const el=document.getElementById('dataDirInput');
+    DB.config.dataDir=el?String(el.value||'').trim():'';
+    save();
+    if(!nativeApi().ok){ renderLocalStatus(); toast('已保存位置设置，但当前环境没有原生写入能力，该设置只在打包后的 EXE 生效'); return; }
+    const ok=await nativeInit();
+    renderLocalStatus();
+    toast(ok?('数据文件位置：'+_nativePath+(_nativeNote?('（'+_nativeNote+'）'):'')):('该位置不可用：'+_nativeNote));
+}
 /* ===== 本地数据文件：指定目录保存数据，不怕清缓存/浏览器坏 ===== */
-let _dirHandle=null,_localOk=false; const LOCAL_TAG='mz_v004_local';
+let _dirHandle=null,_localOk=false,_localPending=null,_localAutoArmed=false;
+const LOCAL_TAG='mz_v004_local', LOCAL_NAME='mz_v004_local_name';
 function idbOpen(){ return new Promise((res,rej)=>{ let r; try{ r=indexedDB.open('mz_v004_fs',1); }catch(e){ rej(e); return; } r.onupgradeneeded=()=>{ try{ r.result.createObjectStore('k'); }catch(e){} }; r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
 function idbSet(v){ return idbOpen().then(db=>new Promise((res,rej)=>{ const tx=db.transaction('k','readwrite'); tx.objectStore('k').put(v,'dir'); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); })).catch(()=>{}); }
 function idbGet(){ return idbOpen().then(db=>new Promise((res,rej)=>{ const tx=db.transaction('k','readonly'); const g=tx.objectStore('k').get('dir'); g.onsuccess=()=>res(g.result||null); g.onerror=()=>rej(g.error); })).catch(()=>null); }
 function idbDel(){ return idbOpen().then(db=>new Promise(res=>{ const tx=db.transaction('k','readwrite'); tx.objectStore('k').delete('dir'); tx.oncomplete=()=>res(); tx.onerror=()=>res(); })).catch(()=>{}); }
-function renderLocalStatus(){ const st=document.getElementById('localStatus'),off=document.getElementById('localOffBtn'); if(!st)return;
-    if(_localOk){ st.innerHTML='<span style="color:var(--ok)"><i class="fa fa-check-circle"></i> 已启用：每次保存自动写入本地数据文件，启动时优先读取本地数据</span>'; off&&(off.style.display=''); }
-    else if(localStorage.getItem(LOCAL_TAG)==='1'){ st.innerHTML='<span style="color:var(--warn)"><i class="fa fa-exclamation-triangle"></i> 已启用但未找到文件夹授权，请点击下方按钮重新选择目录</span>'; off&&(off.style.display=''); }
-    else { st.innerHTML='<span style="color:var(--muted)">未启用：数据仅保存在浏览器中，被清空缓存可能丢失</span>'; off&&(off.style.display='none'); } }
-function writeLocalFile(){ if(!_dirHandle||!_localOk)return; _dirHandle.getFileHandle('mzdata.json',{create:true}).then(f=>f.createWritable()).then(w=>w.write(JSON.stringify(DB)).then(()=>w.close())).catch(()=>{}); }
+function localDirName(){ return localStorage.getItem(LOCAL_NAME)||''; }
+function localNameText(){ const n=localDirName(); return n?('目录：'+esc(n)):'上次选择的目录'; }
+function renderLocalStatus(){
+    const st=document.getElementById('localStatus'),off=document.getElementById('localOffBtn'),
+          rb=document.getElementById('localRestoreBtn'),pb=document.getElementById('localPickBtn');
+    if(!st)return;
+    const enabled=localStorage.getItem(LOCAL_TAG)==='1';
+    const needRestore=!(_localOk)&&enabled&&!!_localPending;
+    const natOn=_nativeOk;
+    let html='';
+    if(natOn){
+        html='<span style="color:var(--ok)"><i class="fa fa-check-circle"></i> 已启用原生写入：打开软件自动读取、每次保存自动写入，<b>不需要任何授权确认、不用点任何按钮</b></span>'
+           + '<br><span style="color:var(--muted);font-size:12px">数据文件：'+esc(_nativePath||'mzdata.json')+'</span>'
+           + (_nativeNote?'<br><span style="color:var(--warn);font-size:12px"><i class="fa fa-exclamation-triangle"></i> '+esc(_nativeNote)+'</span>':'');
+    } else if(_localOk){
+        html='<span style="color:var(--ok)"><i class="fa fa-check-circle"></i> 已启用：每次保存自动写入本地数据文件，启动时优先读取本地数据</span>';
+    } else if(needRestore){
+        html='<span style="color:var(--muted)"><i class="fa fa-clock-o"></i> 本地数据文件已启用（'+localNameText()+'）· 本次运行正在等待系统确认授权：<b>点一下页面任意位置</b>会自动确认，之后每次保存自动写入，无需再管。</span>';
+    } else if(enabled){
+        html='<span style="color:var(--warn)"><i class="fa fa-exclamation-triangle"></i> 已启用过本地数据文件（'+localNameText()+'），但没找到目录授权记录，请重新选择目录。</span>';
+    } else {
+        html='<span style="color:var(--muted)">未启用：数据仅保存在软件内部，被清空缓存可能丢失</span>';
+    }
+    html+='<br><span style="color:var(--muted);font-size:12px"><i class="fa fa-info-circle"></i> EXE 原生写入：'+(natOn?'可用':'不可用 —— '+esc(_nativeNote))+'</span>';
+    st.innerHTML=html;
+    if(off) off.style.display=(!natOn&&enabled)?'':'none';
+    if(rb) rb.style.display=(!natOn&&needRestore)?'':'none';
+    const dr=document.getElementById('dataDirRow'); if(dr) dr.style.display=natOn?'':'none';
+    if(pb){ pb.style.display=natOn?'none':''; pb.classList.toggle('primary',!needRestore); pb.innerHTML=needRestore?'<i class="fa fa-folder-open-o"></i> 重新选择目录':'<i class="fa fa-folder-open-o"></i> 选择目录并生成数据文件'; }
+}
+function writeLocalFile(){ if(!_dirHandle||!_localOk)return;
+    _dirHandle.getFileHandle('mzdata.json',{create:true}).then(f=>f.createWritable()).then(w=>w.write(JSON.stringify(DB)).then(()=>w.close()))
+    .catch(e=>{ if(e&&e.name==='NotAllowedError'){ _localOk=false; _localPending=_dirHandle; renderLocalStatus(); } }); }
+/* 解析并采用本地数据文件内容：比当前内存数据旧则不回滚，成功返回 true */
+function adoptLocalText(txt){
+    try{
+        if(!txt||!txt.trim()) return false;
+        const p=JSON.parse(txt); if(!p||!p.sessions) return false;
+        if((p._savedAt||0)<(DB._savedAt||0)) return false;
+        DB=Object.assign({user:'admin',pass:'admin',theme:'th-gn',rooms:[],staff:[],config:{alertMin:10,sound:true,sysName:SYS_NAME_DEFAULT,keepDays:90,beepSec:10},history:[],sessions:{},alertNotified:{},mute:{},dailyReports:[]},p,{config:Object.assign({alertMin:10,sound:true,sysName:SYS_NAME_DEFAULT,keepDays:90,beepSec:10},p.config||{})});
+        Object.keys(DB.sessions).forEach(k=>{ if(!Array.isArray(DB.sessions[k])) DB.sessions[k]=[DB.sessions[k]]; });
+        normalizeSessions(); migrateSysName();
+        applySysName(); applyTheme(); applyZoom(); renderAll();
+        return true;
+    }catch(e){ return false; }
+}
+/* 读取本地数据文件并覆盖当前数据；成功返回 true */
+async function loadFromLocalHandle(h){
+    try{ const f=await h.getFileHandle('mzdata.json'); const file=await f.getFile(); return adoptLocalText(await file.text()); }
+    catch(e){ return false; }
+}
+/* 恢复目录读写权限（必须由用户手势触发）；interactive=true 时给出 toast 反馈 */
+async function restoreLocalPermission(interactive){
+    const h=_localPending||_dirHandle;
+    if(!h){ if(interactive) toast('请点「重新选择目录」指定数据目录'); return false; }
+    let ok=false;
+    try{
+        if(h.queryPermission) ok=(await h.queryPermission({mode:'readwrite'}))==='granted';
+        if(!ok&&h.requestPermission) ok=(await h.requestPermission({mode:'readwrite'}))==='granted';
+    }catch(e){ ok=false; }
+    if(!ok){ if(interactive) toast('未获得目录授权，请点「重新选择目录」重新指定'); renderLocalStatus(); return false; }
+    _dirHandle=h; _localPending=null; _localOk=true; renderLocalStatus();
+    const got=await loadFromLocalHandle(h);
+    if(interactive) toast(got?'已恢复本地数据文件读写，并载入其中的数据':'已恢复本地数据文件读写');
+    return true;
+}
+/* V016：重新打开软件后用户第一次操作（点一下任意位置/按键/触摸）时自动申请一次授权，无需再找按钮 */
+function armLocalAutoRestore(){
+    if(_localAutoArmed) return; _localAutoArmed=true;
+    const evs=['pointerdown','mousedown','click','keydown','touchstart','touchend'];
+    const once=()=>{
+        evs.forEach(t=>document.removeEventListener(t,once,true));
+        if(_localOk||!_localPending) return;
+        restoreLocalPermission(false).then(ok=>{ if(ok) toast('已自动恢复本地数据文件读写'); });
+    };
+    evs.forEach(t=>document.addEventListener(t,once,true));
+}
 async function pickDataDir(){ if(!window.showDirectoryPicker){ toast('当前浏览器不支持选择文件夹，请用打包后的 EXE'); return; }
     try{ const h=await window.showDirectoryPicker({mode:'readwrite'});
         const f=await h.getFileHandle('mzdata.json',{create:true}); const w=await f.createWritable(); await w.write(JSON.stringify(DB)); await w.close();
-        _dirHandle=h; _localOk=true; localStorage.setItem(LOCAL_TAG,'1'); await idbSet(h); renderLocalStatus(); toast('已启用：数据文件已生成到所选目录 (mzdata.json)'); }
+        _dirHandle=h; _localPending=null; _localOk=true; _localAutoArmed=true;
+        localStorage.setItem(LOCAL_TAG,'1'); localStorage.setItem(LOCAL_NAME,h.name||''); await idbSet(h); renderLocalStatus(); toast('已启用：数据文件已生成到所选目录 (mzdata.json)'); }
     catch(e){ if(e&&e.name!=='AbortError') toast('未完成：'+(e.message||'操作取消')); } }
-async function disableLocalData(){ _localOk=false; _dirHandle=null; localStorage.removeItem(LOCAL_TAG); await idbDel(); renderLocalStatus(); toast('已停用本地数据文件'); }
-async function tryLoadLocal(){ if(localStorage.getItem(LOCAL_TAG)!=='1') return;
+async function disableLocalData(){ _localOk=false; _dirHandle=null; _localPending=null; localStorage.removeItem(LOCAL_TAG); localStorage.removeItem(LOCAL_NAME); await idbDel(); renderLocalStatus(); toast('已停用本地数据文件'); }
+async function tryLoadLocal(){
+    if(localStorage.getItem(LOCAL_TAG)!=='1'){ renderLocalStatus(); return; }
     let h=null; try{ h=await idbGet(); }catch(e){}
     if(!h){ renderLocalStatus(); return; }
-    try{ const f=await h.getFileHandle('mzdata.json'); const file=await f.getFile(); const txt=await file.text();
-        if(txt&&txt.trim()){ const p=JSON.parse(txt); if(p&&p.sessions){ _dirHandle=h; _localOk=true;
-            DB=Object.assign({user:'admin',pass:'admin',theme:'th-gn',rooms:[],staff:[],config:{alertMin:10,sound:true,sysName:'沐足房台倒计时',keepDays:90,beepSec:10},history:[],sessions:{},alertNotified:{},mute:{},dailyReports:[]},p,{config:Object.assign({alertMin:10,sound:true,sysName:'沐足房台倒计时',keepDays:90,beepSec:10},p.config||{})});
-            Object.keys(DB.sessions).forEach(k=>{ if(!Array.isArray(DB.sessions[k])) DB.sessions[k]=[DB.sessions[k]]; });
-            normalizeSessions();
-            applySysName(); applyTheme(); renderAll(); toast('已从本地数据文件恢复数据'); } } }
-    catch(e){} renderLocalStatus(); }
+    let perm=null;
+    try{ if(h.queryPermission) perm=await h.queryPermission({mode:'readwrite'}); }catch(e){ perm=null; }
+    if(perm!=='granted'){
+        _localPending=h; _localOk=false;
+        /* V016：打开软件先静默尝试一次授权——能直接通过的环境（部分打包内核）完全无感，无需任何点击 */
+        const silentOk=await restoreLocalPermission(false);
+        if(!silentOk){ renderLocalStatus(); armLocalAutoRestore(); }
+        return;
+    }
+    _dirHandle=h; _localPending=null; _localOk=true; localStorage.setItem(LOCAL_NAME,h.name||localDirName());
+    const got=await loadFromLocalHandle(h);
+    renderLocalStatus();
+    if(got) toast('已从本地数据文件恢复数据');
+}
 function pruneKeep(){
     const d=Math.max(7,Math.min(730,DB.config.keepDays||90))*86400000, cut=Date.now()-d;
     DB.history=DB.history.filter(h=>h.startTs>=cut);
@@ -475,13 +685,16 @@ function pruneKeep(){
     save();
 }
 function isoDate(ts){ const d=new Date(ts); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+/* ===== V020：「今日已开台」以「上次每日清台」为起点计数，清台后从 0 重新开始 ===== */
+function todayStartTs(){ const d=new Date(); d.setHours(0,0,0,0); return d.getTime(); }
+/* 计数起点 = max(今天0点, 上次清台时刻)。跨天后自动回到今天0点，旧清台时刻不会影响新的一天 */
+function statsBase(){ const b=DB.statsBaseTs||0, t=todayStartTs(); return b>t?b:t; }
 
 let uid=1; function nid(){ uid++; return 'r'+uid+'_'+Math.random().toString(36).slice(2,7); }
 function now(){ return Date.now(); }
 function pad(n){ return (n<10?'0':'')+n; }
 function hms(sec){ sec=Math.max(0,Math.floor(sec)); const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60; return (h>0?pad(h)+':':'')+pad(m)+':'+pad(s); }
 function hmTime(ts){ const d=new Date(ts); return pad(d.getHours())+':'+pad(d.getMinutes()); }
-function isToday(ts){ const d=new Date(ts),t=new Date(); return d.getFullYear()===t.getFullYear()&&d.getMonth()===t.getMonth()&&d.getDate()===t.getDate(); }
 function esc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function dateStr(){ const d=new Date(); return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate()); }
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2600); }
@@ -536,24 +749,50 @@ function openPicker(){
 function openTheme(){ openPicker(); }
 function pickTheme(el){ const k=el.dataset.k; DB.theme=k; save(); applyTheme(); document.getElementById('themeGrid')&&renderThemeGrid(); toast('已切换皮肤：'+THEMES[k].name); closeModal(); }
 function applyTheme(){ if(!THEMES[DB.theme]) DB.theme='th-gn'; const t=THEMES[DB.theme]; const b=document.body; Object.keys(THEMES).forEach(k=>b.classList.remove(k)); b.classList.add(DB.theme); const r=document.documentElement; r.style.setProperty('--primary',t.p1); r.style.setProperty('--primary-2',t.p2); r.style.setProperty('--grad','linear-gradient(135deg,'+t.p1+','+t.p2+')'); }
+/* ===== 页面缩放（EXE 窗口 / 浏览器通用，设置持久保存） ===== */
+const ZOOM_MIN=0.6, ZOOM_MAX=2, ZOOM_STEP=0.1;
+let _zoomSaveT=null;
+function zoomGet(){ let z=parseFloat(DB.config&&DB.config.zoom); if(!isFinite(z)||z<=0) z=1; return Math.min(ZOOM_MAX,Math.max(ZOOM_MIN,Math.round(z*100)/100)); }
+function applyZoom(){ const z=zoomGet(); document.body.style.zoom=z; const txt=Math.round(z*100)+'%'; ['zoomVal','zoomVal2'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=txt; }); }
+function setZoom(z){ DB.config.zoom=Math.min(ZOOM_MAX,Math.max(ZOOM_MIN,Math.round(z*100)/100)); applyZoom(); clearTimeout(_zoomSaveT); _zoomSaveT=setTimeout(save,400); }
+function zoomStep(d){ setZoom(zoomGet()+d*ZOOM_STEP); }
+function zoomReset(){ const was=zoomGet(); setZoom(1); if(was!==1) toast('缩放已恢复 100%'); }
+document.addEventListener('keydown',e=>{ if(!(e.ctrlKey||e.metaKey)||e.altKey) return; const k=e.key;
+    if(k==='='||k==='+'||k==='Add'){ e.preventDefault(); zoomStep(1); }
+    else if(k==='-'||k==='_'||k==='Subtract'){ e.preventDefault(); zoomStep(-1); }
+    else if(k==='0'){ e.preventDefault(); zoomReset(); } });
+document.addEventListener('wheel',e=>{ if(!e.ctrlKey) return; e.preventDefault(); zoomStep(e.deltaY<0?1:-1); },{passive:false});
 /* ===== 登录与鉴权 ===== */
+/* 登录输入归一化：全角转半角、去零宽字符与首尾空白（EXE/中文输入法下最常见的"密码不灵"原因） */
+function normAuth(s){
+    s=String(s==null?'':s);
+    s=s.replace(/[\uFF01-\uFF5E]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/\u3000/g,' ');
+    return s.replace(/[\u200B-\u200D\uFEFF]/g,'').trim();
+}
 function checkLogin(cb){
     if(loggedIn){ cb&&cb(); return; }
     openModal(`<div class="mt"><i class="fa fa-lock" style="color:var(--danger)"></i> 后台登录</div>
         <div style="font-size:13px;color:var(--muted);margin-bottom:6px">请输入后台管理密码（默认账号 admin，密码 admin）</div>
-        <label class="f-label">用户名</label><input type="text" id="lgUser" value="admin">
-        <label class="f-label">密码</label><input type="password" id="lgPass" placeholder="请输入密码">
-        <div class="modal-btns"><button class="btn" onclick="closeModal()">取消</button><button class="btn primary" id="lgOk"><i class="fa fa-check"></i> 登录</button></div>`);
-    document.getElementById('lgOk').addEventListener('click',()=>{
-        const u=document.getElementById('lgUser').value.trim(), p=document.getElementById('lgPass').value;
+        <label class="f-label">用户名</label><input type="text" id="lgUser" value="admin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+        <label class="f-label">密码</label><input type="password" id="lgPass" placeholder="请输入密码，输完按回车即可登录" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false">
+        <label class="set-tips" style="display:flex;align-items:center;gap:7px;margin-top:11px;cursor:pointer"><input type="checkbox" id="lgShow" style="width:auto;flex:none;margin:0"> 显示密码（用于核对是否输错）</label>
+        <div class="modal-btns"><button class="btn" onclick="closeModal()">取消</button><button class="btn primary" id="lgOk"><i class="fa fa-check"></i> 登录</button></div>`,{noClose:true});
+    const uEl=document.getElementById('lgUser'), pEl=document.getElementById('lgPass');
+    const doLogin=()=>{
+        if(loggedIn) return;
+        const u=normAuth(uEl.value), p=normAuth(pEl.value);
         if(u===DB.user&&p===DB.pass){ loggedIn=true; updateLockIcon(); closeModal(); cb&&cb(); }
-        else { toast('用户名或密码错误'); }
-    });
+        else { toast('用户名或密码错误，请核对密码（注意输入法是否在中文状态）'); pEl.value=''; pEl.focus(); }
+    };
+    document.getElementById('lgOk').addEventListener('click',doLogin);
+    document.getElementById('lgShow').addEventListener('change',e=>{ pEl.type=e.target.checked?'text':'password'; pEl.focus(); });
+    [uEl,pEl].forEach(el=>el.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.isComposing){ e.preventDefault(); doLogin(); } }));
+    pEl.focus(); try{ pEl.select(); }catch(e){}
 }
 function updateLockIcon(){ const b=document.getElementById('lockIcon'); b.classList.toggle('fa-unlock',loggedIn); b.classList.toggle('fa-lock',!loggedIn); }
 function logout(){ loggedIn=false; updateLockIcon(); toast('已退出登录'); goToPage('home'); }
 function savePassword(){
-    const u=document.getElementById('pwUser').value.trim(), oldp=document.getElementById('pwOld').value, n1=document.getElementById('pwNew').value, n2=document.getElementById('pwNew2').value;
+    const u=normAuth(document.getElementById('pwUser').value), oldp=normAuth(document.getElementById('pwOld').value), n1=normAuth(document.getElementById('pwNew').value), n2=normAuth(document.getElementById('pwNew2').value);
     if(!u){ toast('请输入用户名'); return; }
     if(oldp!==DB.pass){ toast('旧密码不正确'); return; }
     if(n1&&n1!==n2){ toast('两次新密码不一致'); return; }
@@ -563,9 +802,10 @@ function savePassword(){
 function saveKeepDays(){ const v=parseInt(document.getElementById('keepDaysInput').value); DB.config.keepDays=isNaN(v)?90:Math.max(7,Math.min(730,v)); document.getElementById('keepDaysInput').value=DB.config.keepDays; save(); pruneKeep(); document.getElementById('keepDaysLbl').textContent=DB.config.keepDays; renderStats(); renderHistory(); toast('已保存，保留最近 '+DB.config.keepDays+' 天数据'); }
 
 /* ===== 通用 ===== */
-function openModal(html){ document.getElementById('modalBody').innerHTML=html; document.getElementById('overlay').classList.add('show'); }
-function closeModal(){ document.getElementById('overlay').classList.remove('show'); }
-document.getElementById('overlay').addEventListener('click',e=>{ if(e.target.id==='overlay')closeModal(); });
+let _modalNoClose=false;
+function openModal(html,opts){ _modalNoClose=!!(opts&&opts.noClose); document.getElementById('modalBody').innerHTML=html; document.getElementById('overlay').classList.add('show'); }
+function closeModal(){ _modalNoClose=false; document.getElementById('overlay').classList.remove('show'); }
+document.getElementById('overlay').addEventListener('click',e=>{ if(e.target.id==='overlay'&&!_modalNoClose)closeModal(); });
 function confirmDel(title,msg,onOk){ openModal(`<div class="mt"><i class="fa fa-exclamation-triangle" style="color:var(--danger)"></i> ${title}</div><div style="font-size:14px;color:var(--title);line-height:1.8">${msg}</div><div class="modal-btns"><button class="btn" onclick="closeModal()">取消</button><button class="btn danger" id="delOkBtn">确认删除</button></div>`); document.getElementById('delOkBtn').addEventListener('click',()=>{ onOk(); closeModal(); }); }
 /* ===== 房台 & 管家 ===== */
 function openStart(roomId){ const room=DB.rooms.find(r=>r.id===roomId); if(!room)return; if(!DB.staff.length){ openAddStaffFirst(roomId); return; } renderStaffPicker(true); document.getElementById('spOk').addEventListener('click',()=>{ const staff=_multi.length?_multi.join('、'):(_picked||(DB.staff[0]||'')); if(!staff){toast('请选择管家');return;} openStartDur(roomId,staff); }); }
@@ -617,7 +857,7 @@ function scardHtml(name,idx){ const list=staffSessions(name);
     const blocks=list.map(x=>{ const r=DB.rooms.find(y=>y.id===x.roomId)||{name:'已删除房台'}; const id=x.roomId;
         const st=sState(x.s), col=st==='over'?'var(--danger-ink)':st==='soon'?'var(--warn-ink)':'var(--ok-ink)';
         return `<div class="sc-block"><div class="sc-row"><i class="fa fa-cube"></i><span class="sc-room">${esc(r.name)}</span><span class="sc-time" style="color:${col}">${hms(sRemaining(x.s))}</span></div>
-            <div class="sc-sub"><i class="fa fa-clock-o"></i> 上钟 ${hmTime(x.s.startTs)} · 结束 ${hmTime(x.s.endTs)}</div>
+            <div class="sc-sub"><i class="fa fa-clock-o"></i> 开始 ${hmTime(x.s.startTs)} · 结束 ${hmTime(x.s.endTs)}</div>
             <div class="sc-acts"><button class="primary" onclick="adjustTime('${id}')"><i class="fa fa-clock-o"></i> 续/退</button><button class="danger" onclick="endSession('${id}')"><i class="fa fa-stop"></i> 结束</button></div></div>`; }).join('');
     const tag=worst==='over'?'<span class="sc-tag danger">已超时</span>':(worst==='soon'?'<span class="sc-tag warn">即将到钟</span>':`<span class="sc-tag">${list.length>1?list.length+' 房服务中':'服务中'}</span>`);
     return `<div class="scard ${worst}">
@@ -633,8 +873,8 @@ function pickRoomForStaff(idx){ const name=DB.staff[idx]; if(!name)return;
 function renderStaffBoard(){ const wrap=document.getElementById('staffBoard');
     const on=DB.staff.filter(n=>staffSessions(n).length).length, idle=DB.staff.length-on;
     const busyRooms=Object.keys(DB.sessions).filter(id=>roomSess(id).length).length;
-    const td=isoDate(now()); let today=DB.history.filter(h=>isoDate(h.startTs)===td).length;
-    Object.keys(DB.sessions).forEach(id=>roomSess(id).forEach(s=>{ if(isoDate(s.startTs)===td) today++; }));
+    const _sb=statsBase(); let today=DB.history.filter(h=>h.startTs>=_sb).length;
+    Object.keys(DB.sessions).forEach(id=>roomSess(id).forEach(s=>{ if(s.startTs>=_sb) today++; }));
     document.getElementById('staffSummary').textContent=DB.staff.length?('已看房 '+on+' 人 / 未看房 '+idle+' 人 · 房台使用 '+busyRooms+' / 共 '+DB.rooms.length+' 间'):'';
     document.getElementById('stNumOn').textContent=on;
     document.getElementById('stNumIdle').textContent=idle;
@@ -692,7 +932,7 @@ function openAddRoom(){ openModal(`<div class="mt"><i class="fa fa-plus-circle">
         if(!nm){toast('请填写房号');return;} if(DB.rooms.find(r=>r.name===nm)){toast('房号已存在');return;} DB.rooms.push({id:nid(),name:nm,zone:zn}); syncRoomZones(); save(); closeModal(); renderStaffBoard(); renderRoomMgmt(); toast('已添加 '+nm+(zn?'（'+zn+'）':'')); }); }
 function delRoom(roomId){ const room=DB.rooms.find(r=>r.id===roomId); if(!room)return; confirmDel('删除房台','确定删除「'+room.name+'」吗？<br>若该房间正在进行服务，将一并结束并保留到历史记录。',()=>{ if(roomSess(roomId).length){ roomSess(roomId).forEach(s=>{ DB.history.unshift({id:nid(),roomName:room.name,staff:s.staff,startTs:s.startTs,endTs:now(),durationMin:Math.round((s.endTs-s.startTs)/60000),status:'删除'}); }); } delete DB.sessions[roomId]; delete DB.alertNotified[roomId]; clearRoomAlerts(roomId); DB.rooms=DB.rooms.filter(r=>r.id!==roomId); save(); renderStaffBoard(); renderRoomMgmt(); toast('已删除'); }); }
 function importRoomTxt(inp){ const f=inp.files[0]; if(!f){inp.value='';return;} const r=new FileReader(); r.onload=e=>{ const lines=e.target.result.split(/\r?\n/).map(l=>l.trim()).filter(Boolean); let a=0,sk=0; lines.forEach(line=>{ const parts=line.split(/[,，\t]/).map(x=>x.trim()); let name=parts[0]||'',zone=parts[1]||''; if(!name)return; if(DB.rooms.find(r=>r.name===name)){sk++;return;} DB.rooms.push({id:nid(),name,zone}); a++; }); syncRoomZones(); save(); inp.value=''; renderStaffBoard(); renderRoomMgmt(); toast('导入成功 '+a+' 个，跳过 '+sk+' 个重复'); }; r.readAsText(f,'UTF-8'); }
-function exportRoomsTxt(){ downloadText('房台清单_'+dateStr()+'.txt', DB.rooms.map(r=>r.name+','+(r.zone||'')).join('\r\n')); }
+function exportRoomsTxt(){ saveTextFile('房台清单_'+dateStr()+'.txt', DB.rooms.map(r=>r.name+','+(r.zone||'')).join('\r\n')); }
 function renderStaffMgmt(){ document.getElementById('staffCnt').textContent=DB.staff.length+' 人'; const list=document.getElementById('staffList');
     if(!DB.staff.length){ list.innerHTML='<div style="color:var(--muted);font-size:13px;padding:6px 2px">暂无管家，请添加或导入。</div>'; return; }
     list.innerHTML=DB.staff.map((s,i)=>`<div class="mrow"><input class="nm-edit" value="${esc(s)}" data-i="${i}" onchange="editStaff(this)" placeholder="姓名"><span class="tp" style="background:rgba(34,181,115,.1);color:var(--ok)">${esc(staffPreview(s))}</span><button class="i-btn del" onclick="delStaff(${i})"><i class="fa fa-trash"></i></button></div>`).join(''); }
@@ -701,11 +941,11 @@ function openAddStaff(){ openModal(`<div class="mt"><i class="fa fa-user-plus"><
     document.getElementById('st2btn').addEventListener('click',()=>{ const v=document.getElementById('st').value.trim(); if(!v){toast('请填写姓名');return;} if(DB.staff.includes(v)){toast('该姓名已存在');return;} DB.staff.push(v); save(); closeModal(); renderStaffMgmt(); toast('已添加 '+v+'（'+staffPreview(v)+'）'); }); setTimeout(()=>document.getElementById('st').focus(),50); }
 function delStaff(i){ const s=DB.staff[i]; confirmDel('删除管家','确定删除管家「'+s+'」吗？',()=>{ DB.staff.splice(i,1); save(); renderStaffMgmt(); toast('已删除'); }); }
 function importStaffTxt(inp){ const f=inp.files[0]; if(!f){inp.value='';return;} const r=new FileReader(); r.onload=e=>{ const lines=e.target.result.split(/\r?\n/).map(l=>l.trim()).filter(Boolean); let a=0,sk=0; lines.forEach(n=>{ if(!n)return; if(DB.staff.includes(n)){sk++;return;} DB.staff.push(n); a++; }); save(); inp.value=''; renderStaffMgmt(); toast('导入成功 '+a+' 人，跳过 '+sk+' 人重复'); }; r.readAsText(f,'UTF-8'); }
-function exportStaffTxt(){ downloadText('管家名单_'+dateStr()+'.txt', DB.staff.join('\r\n')); }
+function exportStaffTxt(){ saveTextFile('管家名单_'+dateStr()+'.txt', DB.staff.join('\r\n')); }
 
 /* ===== 系统设置 ===== */
-function applySysName(){ const n=DB.config.sysName||'沐足房台倒计时'; document.getElementById('sysNameText').textContent=n; document.getElementById('sysNameInput').value=n; document.title=n+' · 倒计时系统'; document.getElementById('keepDaysLbl').textContent=DB.config.keepDays||90; document.getElementById('keepDaysInput').value=DB.config.keepDays||90; }
-function saveSysName(){ const v=document.getElementById('sysNameInput').value.trim()||'沐足房台倒计时'; DB.config.sysName=v; save(); applySysName(); toast('系统名称已保存'); }
+function applySysName(){ const n=DB.config.sysName||SYS_NAME_DEFAULT; document.getElementById('sysNameText').textContent=n; document.getElementById('sysNameInput').value=n; document.title=n+' · 倒计时系统'; document.getElementById('keepDaysLbl').textContent=DB.config.keepDays||90; document.getElementById('keepDaysInput').value=DB.config.keepDays||90; }
+function saveSysName(){ const v=document.getElementById('sysNameInput').value.trim()||SYS_NAME_DEFAULT; DB.config.sysName=v; save(); applySysName(); toast('系统名称已保存'); }
 function renderThemeGrid(){ const grid=document.getElementById('themeGrid'); if(!grid)return; grid.innerHTML=Object.keys(THEMES).map(k=>{ const t=THEMES[k]; return `<div class="theme-item ${DB.theme===k?'active':''}" data-k="${k}" onclick="pickTheme(this)"><div class="swatch" style="background:linear-gradient(135deg,${t.p1},${t.p2})"></div><div class="nm">${t.name}</div></div>`; }).join(''); }
 
 /* ===== 报警：单个 toast 浮窗（最高优先级），多个排队逐个弹出；仅最后 alertMin 分钟或到钟才触发 ===== */
@@ -787,7 +1027,7 @@ function startServiceRoom(){ if(!DB.rooms.length){ toast('请先在后台添加�
         return `<button class="zp-room ${a.length?'busy':''}" onclick="openStart('${r.id}')"><b>${esc(r.name)}</b><em>${a.length?a.length+' 位服务中':'空闲'}</em></button>`; }).join('')}</div></div>`).join('')}</div>
     <div class="modal-btns"><button class="btn" onclick="closeModal()">取消</button></div>`); }
 /* ===== 统计 & 历史 ===== */
-function countActive(){ return Object.keys(DB.sessions).length; }
+function countActive(){ return Object.keys(DB.sessions).filter(id=>roomSess(id).length).length; }
 /* ===== 工时查询：按管家 + 日期范围筛选历史记录 ===== */
 let _statFilter={staff:'',from:'',to:''};
 function minText(min){ min=Math.max(0,Math.round(min||0)); const h=Math.floor(min/60), m=min%60; return (h?h+'小时':'')+(m||!h?m+'分钟':''); }
@@ -825,20 +1065,25 @@ function renderHistory(){ const rows=filteredHistory();
     const list=document.getElementById('historyList');
     if(!rows.length){ list.innerHTML=`<div class="empty"><i class="fa fa-history"></i><p>${_statFilter.staff||_statFilter.from||_statFilter.to?'该条件下暂无记录':'暂无历史记录'}</p></div>`; return; }
     list.innerHTML=rows.slice(0,120).map(h=>{ const d=new Date(h.startTs); return `<div class="hitem"><div class="l"><div class="rt">${esc(h.roomName)}</div><div class="meta">${esc(h.staff||'')} · ${isoDate(h.startTs)} ${pad(d.getHours())}:${pad(d.getMinutes())} 开台${h.note?`<span class="note"><i class="fa fa-pencil"></i> ${esc(h.note)}</span>`:''}</div></div><div class="dur ${h.status==='超时'?'over':'ended'}">${minText(h.durationMin)}</div></div>`; }).join(''); }
-function renderStats(){ const active=countActive(),today=DB.history.filter(h=>isToday(h.startTs)),todayOver=today.filter(h=>h.status==='超时').length;
+function renderStats(){ const active=countActive(),today=DB.history.filter(h=>h.startTs>=statsBase()),todayOver=today.filter(h=>h.status==='超时').length;
     initStatFilter();
     document.getElementById('statsGrid').innerHTML=`<div class="stat a"><div class="num">${active}</div><div class="lab">进行中</div></div><div class="stat b"><div class="num">${today.length}</div><div class="lab">今日已开台</div></div><div class="stat c"><div class="num">${DB.rooms.length}</div><div class="lab">房台总数</div></div><div class="stat d"><div class="num">${todayOver}</div><div class="lab">今日超时</div></div>`; renderHistory(); }
 function clearHistory(){ if(!DB.history.length){toast('暂无历史记录');return;} confirmDel('清空历史','确定清空全部历史服务记录吗？此操作不可恢复。',()=>{ DB.history=[]; save(); renderStats(); }); }
 
 /* ===== 每日清台与结算 ===== */
-function todayItems(){ const items=[],t=now(); DB.history.forEach(h=>{ if(isoDate(h.startTs)===isoDate(t)){ items.push({roomName:h.roomName,staff:h.staff,durationMin:h.durationMin,status:h.status||'正常',time:pad(new Date(h.startTs).getHours())+':'+pad(new Date(h.startTs).getMinutes()),note:h.note||''}); }}); Object.keys(DB.sessions).forEach(id=>{ const r=DB.rooms.find(x=>x.id===id); if(!r)return; roomSess(id).forEach(s=>{ items.push({roomName:r.name,staff:s.staff,durationMin:Math.round((s.endTs-s.startTs)/60000),status:'进行中',time:pad(new Date(s.startTs).getHours())+':'+pad(new Date(s.startTs).getMinutes()),note:''}); }); }); return items; }
+function todayItems(){ const items=[],b=statsBase(); DB.history.forEach(h=>{ if(h.startTs>=b){ items.push({roomName:h.roomName,staff:h.staff,durationMin:h.durationMin,status:h.status||'正常',time:pad(new Date(h.startTs).getHours())+':'+pad(new Date(h.startTs).getMinutes()),note:h.note||''}); }}); Object.keys(DB.sessions).forEach(id=>{ const r=DB.rooms.find(x=>x.id===id); if(!r)return; roomSess(id).forEach(s=>{ items.push({roomName:r.name,staff:s.staff,durationMin:Math.round((s.endTs-s.startTs)/60000),status:'进行中',time:pad(new Date(s.startTs).getHours())+':'+pad(new Date(s.startTs).getMinutes()),note:''}); }); }); return items; }
 function computeDailySummary(items){ const c={}; items.forEach(it=>{c[it.roomName]=(c[it.roomName]||0)+1;}); const rep=Object.keys(c).filter(k=>c[k]>1); return {total:items.length,roomCount:Object.keys(c).length,repCount:rep.length}; }
-function dailySettlement(){ const items=todayItems(),sum=computeDailySummary(items);
-    openModal(`<div class="mt"><i class="fa fa-calendar-check-o" style="color:var(--primary)"></i> 今日清台并保存</div><div style="line-height:2;font-size:14px"><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span>今日已开台</span><b>${sum.total} 次</b></div><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span>涉及房间</span><b>${sum.roomCount} 间</b></div><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span>重房(多次使用)</span><b style="color:${sum.repCount?'var(--warn)':'var(--ok)'}">${sum.repCount} 间</b></div><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span>进行中(将被结束)</span><b style="color:${Object.keys(DB.sessions).length?'var(--danger)':'var(--ok)'}">${Object.keys(DB.sessions).length} 间</b></div></div>
-    <div style="font-size:13px;color:var(--muted);line-height:1.9;margin-top:10px">点击确认后会<strong>先保存</strong>今天全部开台及重房间的管家与时长明细到「每日结算记录」，<strong>再清空</strong>当前所有进行中的房间。清台后当天数据可随时找回。</div>
+/* V020：清台时强制结束所有未结束的服务（顺带清掉空数组残留），返回被结束的房台数 */
+function endAllSessions(){ let n=0;
+    Object.keys(DB.sessions).forEach(id=>{ if(roomSess(id).length){ try{ endSessionDirect(id,true); n++; }catch(e){} } else delete DB.sessions[id]; });
+    return n; }
+function dailySettlement(){ const items=todayItems(),sum=computeDailySummary(items),pend=countActive();
+    if(!items.length){ toast('本次清台之后还没有开台记录，不需要清台'); return; }
+    openModal(`<div class="mt"><i class="fa fa-calendar-check-o" style="color:var(--primary)"></i> 今日清台并保存</div><div style="line-height:2;font-size:14px"><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span>今日已开台</span><b>${sum.total} 次</b></div><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span>涉及房间</span><b>${sum.roomCount} 间</b></div><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span>重房(多次使用)</span><b style="color:${sum.repCount?'var(--warn)':'var(--ok)'}">${sum.repCount} 间</b></div><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span>进行中(将被强制结束)</span><b style="color:${pend?'var(--danger)':'var(--ok)'}">${pend} 间</b></div></div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.9;margin-top:10px">点击确认后会<strong>先保存</strong>今天全部开台及重房间的管家与时长明细到「每日结算记录」，<strong>再把还没结束的房间全部强制结束</strong>（时长按剩余情况记为正常/超时），最后清空进行中列表。<br>清台后<strong>「今日已开台」会从 0 重新计数</strong>，方便第二天重新开始；当天明细可随时在「每日结算记录」找回。</div>
     <div class="modal-btns"><button class="btn" onclick="closeModal()">取消</button><button class="btn primary" id="settleOk"><i class="fa fa-check"></i> 确认清台并保存</button></div>`);
-    document.getElementById('settleOk').addEventListener('click',()=>{ const report={date:isoDate(now()),createdAt:now(),total:sum.total,roomCount:sum.roomCount,repCount:sum.repCount,items}; DB.dailyReports.unshift(report); Object.keys(DB.sessions).forEach(id=>{ try{endSessionDirect(id,true);}catch(e){} }); save(); closeModal(); renderAll(); pruneKeep();
-        openModal(`<div class="mt"><i class="fa fa-check-circle" style="color:var(--ok)"></i> 清台完成 · 已保存</div><div style="line-height:2;font-size:14px"><div style="display:flex;justify-content:space-between"><span>保存日期</span><b>${report.date}</b></div><div style="display:flex;justify-content:space-between"><span>已开台</span><b>${report.total} 次</b></div><div style="display:flex;justify-content:space-between"><span>重房间数</span><b>${report.repCount} 间</b></div></div><div style="font-size:13px;color:var(--muted);margin-top:10px">可在「统计 → 每日结算记录」查看，或在后台导出 Excel 报表。</div><div class="modal-btns"><button class="btn primary" onclick="closeModal()" style="flex:1">好的</button></div>`); }); }
+    document.getElementById('settleOk').addEventListener('click',()=>{ const report={date:isoDate(now()),createdAt:now(),total:sum.total,roomCount:sum.roomCount,repCount:sum.repCount,items}; DB.dailyReports.unshift(report); const ended=endAllSessions(); DB.statsBaseTs=now(); save(); closeModal(); renderAll(); pruneKeep();
+        openModal(`<div class="mt"><i class="fa fa-check-circle" style="color:var(--ok)"></i> 清台完成 · 已保存</div><div style="line-height:2;font-size:14px"><div style="display:flex;justify-content:space-between"><span>保存日期</span><b>${report.date}</b></div><div style="display:flex;justify-content:space-between"><span>已开台</span><b>${report.total} 次</b></div><div style="display:flex;justify-content:space-between"><span>强制结束</span><b>${ended} 间</b></div><div style="display:flex;justify-content:space-between"><span>重房间数</span><b>${report.repCount} 间</b></div></div><div style="font-size:13px;color:var(--muted);margin-top:10px">「今日已开台」已归 0，重新开始计数。明细可在「统计 → 每日结算记录」查看，或在后台导出 Excel 报表。</div><div class="modal-btns"><button class="btn primary" onclick="closeModal()" style="flex:1">好的</button></div>`); }); }
 function viewDailyReport(report){ const counts={}; report.items.forEach(it=>{counts[it.roomName]=(counts[it.roomName]||0)+1;}); const rows=report.items.map((it,i)=>{ const rep=counts[it.roomName]>1; return `<tr style="background:${i%2?'var(--surface-2)':'#fff'}"><td style="padding:6px 8px">${i+1}</td><td style="padding:6px 8px">${esc(it.roomName)}${rep?' <i class="fa fa-repeat" style="color:var(--warn)" title="重房"></i>':''}</td><td style="padding:6px 8px">${esc(it.staff||'')}</td><td style="padding:6px 8px">${it.time}</td><td style="padding:6px 8px">${it.durationMin}分</td><td style="padding:6px 8px;color:${it.status==='进行中'?'var(--primary)':it.status==='超时'?'var(--danger)':'var(--ok)'}">${it.status}</td></tr>`; }).join('');
     openModal(`<div class="mt"><i class="fa fa-calendar-check-o" style="color:var(--primary)"></i> ${report.date} 每日结算</div><div style="display:flex;gap:9px;margin-bottom:12px"><div class="stat a" style="flex:1"><div class="num">${report.total}</div><div class="lab">开台次数</div></div><div class="stat b" style="flex:1"><div class="num">${report.roomCount}</div><div class="lab">房间数</div></div><div class="stat c" style="flex:1"><div class="num">${report.repCount}</div><div class="lab">重房间数</div></div></div><div style="font-size:12px;color:var(--muted);margin-bottom:6px">带 <i class="fa fa-repeat" style="color:var(--warn)"></i> 表示当天多次开台(重房)</div><div style="max-height:45vh;overflow:auto;border:1px solid var(--line);border-radius:10px"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:var(--surface-2)"><th style="padding:7px 8px;text-align:left">#</th><th style="padding:7px 8px;text-align:left">房号</th><th style="padding:7px 8px;text-align:left">管家</th><th style="padding:7px 8px;text-align:left">开台</th><th style="padding:7px 8px;text-align:left">时长</th><th style="padding:7px 8px;text-align:left">备注</th></tr></thead><tbody>${rows}</tbody></table></div><div class="modal-btns"><button class="btn primary" onclick="closeModal()" style="flex:1">关闭</button></div>`); }
 function renderDailyList(){ const list=document.getElementById('dailyList'); if(!list)return; if(!DB.dailyReports.length){ list.innerHTML='<div class="empty" style="padding:26px 12px"><i class="fa fa-calendar-check-o"></i><p>暂无每日清台记录</p><p>每天收工前点「每日清台」即可保存当天明细</p></div>'; return; } list.innerHTML=DB.dailyReports.map((r,i)=>`<div class="hitem" style="cursor:pointer" onclick="viewDailyReport(DB.dailyReports[${i}])"><div class="l"><div class="rt"><i class="fa fa-calendar-check-o" style="color:var(--primary);margin-right:6px"></i>${r.date}<span class="tg">已保存</span></div><div class="meta">开台 ${r.total} 次 · 房间 ${r.roomCount} 间 · 重房 ${r.repCount} 间</div></div><i class="fa fa-chevron-right" style="color:var(--muted)"></i></div>`).join(''); }
@@ -846,8 +1091,22 @@ function clearDailyReports(){ if(!DB.dailyReports.length){toast('暂无每日结
 function navigateDaily(){ goToPage('stats'); dailySettlement(); }
 
 /* ===== 备份 / 导出 ===== */
-function downloadText(name,content){ const b=new Blob(['\ufeff'+content],{type:'text/plain;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
-function exportBackup(){ downloadText((DB.config.sysName||'沐足')+'倒计时备份_'+dateStr()+'.json', JSON.stringify({user:DB.user,pass:DB.pass,theme:DB.theme,rooms:DB.rooms,staff:DB.staff,config:DB.config,history:DB.history,mute:DB.mute,dailyReports:DB.dailyReports},null,2)); toast('备份已导出'); }
+/* V019：导出改走原生文件接口——打包后的 EXE 里网页下载（Blob + a.click）不会被接管，点了没反应；
+   现在 EXE 中直接把文件写进后台设置的数据库目录，并在界面显示完整路径；普通浏览器仍用下载方式 */
+function dbDirOf(){ const p=_nativePath||''; const i=Math.max(p.lastIndexOf('\\'),p.lastIndexOf('/')); return i>0?p.slice(0,i):''; }
+async function saveTextFile(name,content,opt){
+    opt=(opt&&typeof opt==='object')?opt:{silent:!!opt};   /* 第三参允许直接传 true 表示静默 */
+    const txt=opt.noBom?content:('\ufeff'+content);
+    if(_nativeOk){
+        let file=name;
+        try{ const d=dbDirOf(); if(d) file=await pathJoin(d,name); }catch(e){}
+        try{ await nativeWriteAt(file,txt,_nativeRel); if(!opt.silent) toast('已导出到 '+file); }
+        catch(e){ toast('导出失败：'+((e&&e.message)||e)); }
+        return;
+    }
+    const b=new Blob([txt],{type:'text/plain;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+function exportBackup(){ saveTextFile((DB.config.sysName||'沐足')+'倒计时备份_'+dateStr()+'.json', JSON.stringify({user:DB.user,pass:DB.pass,theme:DB.theme,rooms:DB.rooms,staff:DB.staff,config:DB.config,history:DB.history,mute:DB.mute,dailyReports:DB.dailyReports},null,2)); }
 function xmlEsc(v){ return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function xlsCell(v){ if(typeof v==='number'&&isFinite(v))return `<Cell><Data ss:Type="Number">${v}</Data></Cell>`; return `<Cell><Data ss:Type="String">${xmlEsc(v)}</Data></Cell>`; }
 function xlsRow(cells){ return '<Row>'+cells.map(xlsCell).join('')+'</Row>'; }
@@ -862,10 +1121,297 @@ function exportExcel(onlyHistory){ const sheets=[];
     const aRows=[[ '系统名称',DB.config.sysName],['提前提醒(分钟)',DB.config.alertMin],['提示音',DB.config.sound?'开启':'关闭'],['提示音时长(秒)',DB.config.beepSec||10],['保留天数',DB.config.keepDays]]; sheets.push(xlsSheet('设置信息',aRows));
     const dRows=[[ '日期','开台次数','房间数','重房间数' ]]; const dDet=[[ '日期','房号','管家','开台时间','时长(分钟)','状态','备注' ]]; DB.dailyReports.forEach(rp=>{ const counts={}; rp.items.forEach(it=>{counts[it.roomName]=(counts[it.roomName]||0)+1;}); dRows.push([rp.date,rp.total,rp.roomCount,rp.repCount]); rp.items.forEach(it=>{ dDet.push([rp.date,it.roomName,it.staff||'',it.time,it.durationMin,it.status,it.note||'']); }); }); sheets.push(xlsSheet('每日结算汇总',dRows)); sheets.push(xlsSheet('每日结算明细',dDet));
     const xml='<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40"><Styles><Style ss:ID="h"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#2F7EE3" ss:Pattern="Solid"/></Style></Styles>'+sheets.join('')+'</Workbook>';
-    const b=new Blob(['\ufeff'+xml],{type:'application/vnd.ms-excel;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=(onlyHistory?'历史服务记录_':((DB.config.sysName||'沐足')+'报表_'))+dateStr()+'.xls'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); toast('Excel 报表已导出'); }
+    saveTextFile((onlyHistory?'历史服务记录_':((DB.config.sysName||'沐足')+'报表_'))+dateStr()+'.xls', xml); }
+
+/* ===== V019：导出 Microsoft Access 可用的数据表（CSV）＋一键建库脚本 ===== */
+/* 网页内核无法直接写 .accdb/.mdb（那需要本机 Access 引擎），所以做成两部分：
+   ① 导出 8 张 CSV（Access 可直接「导入/链接 文本文件」）；② 生成一个 .vbs 脚本，双击即把 CSV 灌进 倒计时数据库.accdb */
+function accCols(def){ return def.split(', ').map(s=>{ const m=s.match(/\[([^\]]+)\]/); return m?m[1]:''; }); }
+function csvCell(v){ let s=(v===null||v===undefined)?'':String(v).replace(/[\r\n]+/g,' '); return /[",]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }
+function csvTable(cols,rows){ return [cols].concat(rows||[]).map(r=>r.map(csvCell).join(',')).join('\r\n'); }
+function accessTables(){
+    const T=[];
+    T.push({name:'房台',file:'房台.csv',def:'[序号] INTEGER, [房号] TEXT(50), [分区] TEXT(50), [当前状态] TEXT(20), [当前管家] TEXT(150)',nums:'0',
+        rows:DB.rooms.map((r,i)=>{ const has=roomSess(r.id).length;
+            return [i+1,r.name,roomZoneName(r),has?(roomState(r.id)==='over'?'超时':(roomState(r.id)==='soon'?'即将到钟':'服务中')):'空闲',has?roomStaffText(r.id):'']; })});
+    T.push({name:'管家',file:'管家.csv',def:'[序号] INTEGER, [姓名] TEXT(50), [拼音首字母] TEXT(10)',nums:'0',
+        rows:DB.staff.map((n,i)=>[i+1,n,pyHead(n)||'?'])});
+    T.push({name:'分区',file:'分区.csv',def:'[序号] INTEGER, [分区名] TEXT(50), [房台数] INTEGER',nums:'0,2',
+        rows:(DB.zones||[]).map((z,i)=>[i+1,z,DB.rooms.filter(r=>(r.zone||'')===z).length])});
+    T.push({name:'进行中服务',file:'进行中服务.csv',def:'[序号] INTEGER, [房号] TEXT(50), [分区] TEXT(50), [管家] TEXT(50), [开台时间] TEXT(10), [剩余时分秒] TEXT(20), [结束时间] TEXT(10)',nums:'0',
+        rows:(()=>{ const out=[];
+            Object.keys(DB.sessions).forEach(id=>{ const r=DB.rooms.find(x=>x.id===id); if(!r)return;
+                roomSess(id).forEach(s=>out.push([out.length+1,r.name,roomZoneName(r),s.staff,hmTime(s.startTs),hms(sRemaining(s)),hmTime(s.endTs)])); });
+            return out; })()});
+    T.push({name:'历史记录',file:'历史记录.csv',def:'[序号] INTEGER, [房号] TEXT(50), [管家] TEXT(50), [开台日期] TEXT(12), [开台时间] TEXT(10), [时长分钟] INTEGER, [状态] TEXT(20), [备注] MEMO',nums:'0,5',
+        rows:DB.history.map((h,i)=>{ const d=new Date(h.startTs);
+            return [i+1,h.roomName||'',h.staff||'',d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()),pad(d.getHours())+':'+pad(d.getMinutes()),h.durationMin,h.status||'',h.note||'']; })});
+    T.push({name:'每日结算',file:'每日结算.csv',def:'[序号] INTEGER, [日期] TEXT(12), [开台次数] INTEGER, [房间数] INTEGER, [重房间数] INTEGER',nums:'0,2,3,4',
+        rows:DB.dailyReports.map((rp,i)=>[i+1,rp.date,rp.total,rp.roomCount,rp.repCount])});
+    T.push({name:'每日结算明细',file:'每日结算明细.csv',def:'[序号] INTEGER, [日期] TEXT(12), [房号] TEXT(50), [管家] TEXT(50), [开台时间] TEXT(10), [时长分钟] INTEGER, [状态] TEXT(20), [备注] MEMO',nums:'0,5',
+        rows:(()=>{ const out=[]; DB.dailyReports.forEach(rp=>(rp.items||[]).forEach(it=>out.push([out.length+1,rp.date,it.roomName,it.staff||'',it.time,it.durationMin,it.status,it.note||'']))); return out; })()});
+    T.push({name:'设置',file:'设置.csv',def:'[序号] INTEGER, [项目] TEXT(50), [内容] TEXT(255)',nums:'0',
+        rows:[['系统名称',DB.config.sysName],['提前提醒分钟',DB.config.alertMin],['提示音',DB.config.sound?'开启':'关闭'],['提示音时长秒',DB.config.beepSec||10],['保留天数',DB.config.keepDays],['数据文件目录',(DB.config&&DB.config.dataDir)||''],['导出时间',dateStr()+' '+hmTime(now())]].map((r,i)=>[i+1,r[0],r[1]])});
+    T.forEach(t=>{ t.cols=accCols(t.def); });
+    return T;
+}
+/* 生成一键建库脚本：双击后在同目录产出 倒计时数据库.accdb（无 ACE 时降级为 .mdb），并把 CSV 导入成对应数据表。
+   脚本源码保持纯 ASCII（中文用 ChrW 拼接）：wscript 不认 UTF-8 BOM、读无 BOM 的 UTF-8 中文又会乱码，纯 ASCII 才最稳 */
+function accHex(s){ return Array.from(String(s)).map(c=>c.codePointAt(0).toString(16).toUpperCase().padStart(4,'0')).join(','); }
+function accS(s){ return 'S("'+accHex(s)+'")'; }
+function buildAccessVbs(T){
+    const N=T.length;
+    const arr=T.map(t=>'  '+accS(t.file)+' & "|" & '+accS(t.name)+' & "|" & '+accS(t.def)+' & "|" & "'+t.nums+'", _').join('\n');
+    const MSG=[
+        ['mTOk','生成成功'],['mTFail','未安装 Access 引擎'],
+        ['mDbName','倒计时数据库'],['mDbTmp','倒计时数据库_生成中'],
+        ['mOkHead','已生成 Microsoft Access 数据库：'],['mOkR1','共导入 '],['mOkR2',' 行数据，共 '],['mOkR3',' 张表。'],
+        ['mOkOpen','双击该文件即可用 Access 打开查看。'],['mErrHead','以下内容未成功导入：'],
+        ['mF1','本机没有找到 Microsoft Access 数据库引擎，因此没有生成 Access 数据库文件。'],
+        ['mF2','可以这样处理（任选一种）：'],
+        ['mF3','1) 安装微软免费的「Microsoft Access 数据库引擎 2016 可再发行组件包」，位数要和 Office 一致（Office 是 32 位就装 32 位），装好后重新双击本脚本；'],
+        ['mF4','2) 本机装了 Office/Access 的，可直接在 Access 里「外部数据 → 从文件 → 文本文件」导入同目录的 CSV；'],
+        ['mF5','3) 不装引擎也不影响系统正常使用：数据本来就已经完整保存在同目录的 mzdata.json 里。'],
+        ['mE1',' 不存在（请先在软件里点一次「导出 Access 数据表」）'],
+        ['mE2',' 建表失败：'],['mE3',' 第 '],['mE4',' 行未导入：']
+    ];
+    const decl='Dim '+MSG.map(m=>m[0]).join(', ');
+    const assign=MSG.map(m=>m[0]+' = '+accS(m[1])).join('\n');
+    const vbs=`Option Explicit
+' Generated by the shop countdown system: imports the CSV files in this folder into one Microsoft Access database.
+' Requires the Microsoft Access Database Engine (or Office/Access) installed on this machine.
+' This file is pure ASCII on purpose: the script host cannot read UTF-8 Chinese properly.
+Dim fso, sh, base, conn, tables, i, k, j, ok, retried, prov, ext, dbPath, tmpPath, finalPath
+Dim arch, totalRows, errs, tblCount
+
+Set fso = CreateObject("Scripting.FileSystemObject")
+Set sh = CreateObject("WScript.Shell")
+base = fso.GetParentFolderName(WScript.ScriptFullName)
+
+retried = ""
+If WScript.Arguments.Count > 0 Then retried = WScript.Arguments(0)
+
+tblCount = ${N}
+${decl}
+${assign}
+
+' Each item: CSV file name | table name | CREATE TABLE statement | numeric column indexes
+tables = Array( _
+${arr}
+  "")
+
+ok = False
+For i = 0 To UBound(tables) - 1
+  If Not ok Then
+    If i = 0 Then
+      prov = "Microsoft.ACE.OLEDB.16.0" : ext = "accdb"
+    ElseIf i = 1 Then
+      prov = "Microsoft.ACE.OLEDB.12.0" : ext = "accdb"
+    Else
+      prov = "Microsoft.Jet.OLEDB.4.0" : ext = "mdb"
+    End If
+    finalPath = fso.BuildPath(base, mDbName & "." & ext)
+    tmpPath = fso.BuildPath(base, mDbTmp & "." & ext)
+    If fso.FileExists(tmpPath) Then
+      On Error Resume Next
+      fso.DeleteFile tmpPath, True
+      On Error GoTo 0
+    End If
+    If TryCreate(prov, tmpPath) Then
+      ok = True : dbPath = tmpPath
+      Set conn = CreateObject("ADODB.Connection")
+      conn.Open "Provider=" & prov & ";Data Source=" & dbPath
+      ImportAll conn, base, tables, totalRows, errs
+      conn.Close
+      ' Replace the old database only when every table imported cleanly.
+      If Len(errs) = 0 Then
+        If fso.FileExists(finalPath) Then
+          On Error Resume Next
+          fso.DeleteFile finalPath, True
+          On Error GoTo 0
+        End If
+        On Error Resume Next
+        fso.MoveFile tmpPath, finalPath
+        If Err.Number <> 0 Then
+          Err.Clear
+          finalPath = tmpPath
+          tmpPath = finalPath
+        End If
+        On Error GoTo 0
+      End If
+      MsgBox mOkHead & vbCrLf & finalPath & vbCrLf & vbCrLf & _
+             mOkR1 & totalRows & mOkR2 & (UBound(tables)) & mOkR3 & vbCrLf & _
+             mOkOpen & IIfStr(Len(errs) > 0, vbCrLf & vbCrLf & mErrHead & vbCrLf & errs, ""), 64, mTOk
+    End If
+  End If
+Next
+
+If Not ok Then
+  arch = sh.ExpandEnvironmentStrings("%PROCESSOR_ARCHITECTURE%")
+  If arch = "AMD64" And retried <> "retry32" Then
+    ' If Office is 32-bit the engine only exists in the 32-bit view, retry with the 32-bit script host once.
+    sh.Run """" & sh.ExpandEnvironmentStrings("%SystemRoot%") & "\\SysWOW64\\wscript.exe"" """ & WScript.ScriptFullName & """ retry32", 1, True
+    WScript.Quit
+  End If
+  MsgBox mF1 & vbCrLf & vbCrLf & _
+         mF2 & vbCrLf & _
+         mF3 & vbCrLf & _
+         mF4 & vbCrLf & _
+         mF5, 48, mTFail
+  WScript.Quit
+End If
+
+Function IIfStr(c, a, b)
+  If c Then IIfStr = a Else IIfStr = b
+End Function
+
+Function TryCreate(p, path)
+  Dim cat
+  On Error Resume Next
+  Set cat = CreateObject("ADOX.Catalog")
+  If Err.Number <> 0 Then
+    TryCreate = False : Err.Clear
+    Exit Function
+  End If
+  cat.Create "Provider=" & p & ";Data Source=" & path
+  If Err.Number <> 0 Then
+    TryCreate = False : Err.Clear
+  Else
+    TryCreate = True
+  End If
+End Function
+
+Function ReadUtf8(path)
+  Dim st
+  Set st = CreateObject("ADODB.Stream")
+  st.Type = 2
+  st.Charset = "utf-8"
+  st.Open
+  st.LoadFromFile path
+  ReadUtf8 = st.ReadText
+  st.Close
+End Function
+
+Function ColList(def)
+  Dim parts, i, a, b, s
+  parts = Split(def, ", ")
+  s = ""
+  For i = 0 To UBound(parts)
+    a = InStr(parts(i), "[") : b = InStr(parts(i), "]")
+    If a > 0 And b > a Then
+      If Len(s) > 0 Then s = s & ","
+      s = s & Mid(parts(i), a, b - a + 1)
+    End If
+  Next
+  ColList = s
+End Function
+
+Function SplitCsv(line)
+  Dim out(), n, i, c, cur, inQ
+  ReDim out(60)
+  n = 0 : cur = "" : inQ = False
+  For i = 1 To Len(line)
+    c = Mid(line, i, 1)
+    If inQ Then
+      If c = """" Then
+        If Mid(line, i + 1, 1) = """" Then
+          cur = cur & """" : i = i + 1
+        Else
+          inQ = False
+        End If
+      Else
+        cur = cur & c
+      End If
+    Else
+      If c = """" Then
+        inQ = True
+      ElseIf c = "," Then
+        out(n) = cur : n = n + 1 : cur = ""
+      Else
+        cur = cur & c
+      End If
+    End If
+  Next
+  out(n) = cur
+  ReDim Preserve out(n)
+  SplitCsv = out
+End Function
+
+Sub ImportAll(conn, base, tables, totalRows, errs)
+  Dim i, parts, fname, tname, def, nums, path, lines, v, cells, sql, cols, cnt, bad
+  totalRows = 0 : errs = ""
+  conn.BeginTrans
+  For i = 0 To UBound(tables) - 1
+    parts = Split(tables(i), "|")
+    fname = parts(0) : tname = parts(1) : def = parts(2) : nums = "," & parts(3) & ","
+    path = fso.BuildPath(base, fname)
+    If Not fso.FileExists(path) Then
+      errs = errs & fname & mE1 & vbCrLf
+    Else
+      On Error Resume Next
+      conn.Execute "DROP TABLE [" & tname & "]"
+      Err.Clear
+      conn.Execute "CREATE TABLE [" & tname & "] (" & def & ")"
+      If Err.Number <> 0 Then
+        bad = Err.Description : Err.Clear
+        errs = errs & tname & mE2 & bad & vbCrLf
+      Else
+        cols = ColList(def)
+        lines = Split(ReadUtf8(path), vbLf)
+        cnt = 0
+        For j = 1 To UBound(lines)
+          v = lines(j)
+          If Right(v, 1) = vbCr Then v = Left(v, Len(v) - 1)
+          v = Trim(v)
+          If Len(v) > 0 Then
+            cells = SplitCsv(v)
+            sql = ""
+            For k = 0 To UBound(cells)
+              If Len(sql) > 0 Then sql = sql & ","
+              If InStr(nums, "," & k & ",") > 0 Then
+                If IsNumeric(Trim(cells(k))) Then sql = sql & Trim(cells(k)) Else sql = sql & "Null"
+              Else
+                sql = sql & "'" & Replace(cells(k), "'", "''") & "'"
+              End If
+            Next
+            conn.Execute "INSERT INTO [" & tname & "] (" & cols & ") VALUES (" & sql & ")"
+            If Err.Number <> 0 Then
+              bad = Err.Description : Err.Clear
+              errs = errs & tname & mE3 & j & mE4 & bad & vbCrLf
+            Else
+              cnt = cnt + 1
+            End If
+          End If
+        Next
+        totalRows = totalRows + cnt
+      End If
+    End If
+  Next
+  conn.CommitTrans
+End Sub
+
+Function S(h)
+  Dim a, i, r
+  a = Split(h, ",")
+  r = ""
+  For i = 0 To UBound(a)
+    r = r & ChrW(CLng("&H" & a(i)))
+  Next
+  S = r
+End Function
+`;
+    return vbs.split('\n').join('\r\n');
+}
+async function exportAccess(){
+    const T=accessTables(), d=dbDirOf();
+    /* CSV 带 BOM（Excel/记事本打开中文不乱码）；.vbs 必须<无 BOM 的 UTF-8 —— 带 BOM 时 wscript 会报「无效字符」编译错误 */
+    for(const t of T) await saveTextFile(t.file, csvTable(t.cols,t.rows), {silent:true});
+    await saveTextFile('生成Access数据库.vbs', buildAccessVbs(T), {silent:true,noBom:true});
+    toast('已导出 '+(T.length+1)+' 个文件'+(d?('到 '+d):'')+'：'+T.length+' 张 CSV + 生成Access数据库.vbs（双击即生成 Access 数据库）');
+}
 function importBackup(inp){ const f=inp.files[0]; if(!f){inp.value='';return;} const r=new FileReader(); r.onload=e=>{ try{ const p=JSON.parse(e.target.result); if(!p.rooms) { if(p.rooms===undefined&&p.staff===undefined){toast('备份文件格式不正确');return;} } openModal(`<div class="mt"><i class="fa fa-exclamation-triangle" style="color:var(--warn)"></i> 导入恢复备份</div><div style="font-size:14px;line-height:1.9;color:var(--title)">导入将<strong>覆盖</strong>当前全部配置与历史记录，且正在进行的服务会被清空。是否继续？</div><div class="modal-btns"><button class="btn" onclick="closeModal()">取消</button><button class="btn danger" id="restoreOk">导入并覆盖</button></div>`);
-            document.getElementById('restoreOk').addEventListener('click',()=>{ const base={user:'admin',pass:'admin',theme:'th-gn',rooms:[],staff:[],config:{alertMin:10,sound:true,sysName:'沐足房台倒计时',keepDays:90,beepSec:10},history:[],sessions:{},alertNotified:{},mute:{},dailyReports:[]}; DB=Object.assign(base,p,{config:Object.assign(base.config,p.config||{}),sessions:{},alertNotified:{}}); inp.value=''; save(); closeModal(); applyTheme(); applySysName(); renderAll(); toast('恢复成功'); }); }catch(err){toast('文件解析失败');} }; r.readAsText(f,'UTF-8'); }
-function resetAll(){ openModal(`<div class="mt"><i class="fa fa-exclamation-triangle" style="color:var(--danger)"></i> 恢复默认 / 清空数据</div><div style="font-size:14px;line-height:1.9;color:var(--title)">将<strong>清空</strong>所有房台、分区、管家、历史记录，并恢复默认设置（保留登录密码）。不建议，修补请先导出备份。继续吗？</div><div class="modal-btns"><button class="btn" onclick="closeModal()">取消</button><button class="btn danger" id="resetOk">确认清空</button></div>`); document.getElementById('resetOk').addEventListener('click',()=>{ const u=DB.user,pw=DB.pass; DB={user:u,pass:pw,theme:DB.theme,rooms:[],staff:[],zones:['1区','2区','3区'],config:{alertMin:10,sound:true,sysName:'沐足房台倒计时',keepDays:90,beepSec:10},history:[],sessions:{},alertNotified:{},mute:{},dailyReports:[],alertFlags:{}}; save(); closeModal(); renderAll(); toast('已清空'); }); }
+            document.getElementById('restoreOk').addEventListener('click',()=>{ const base={user:'admin',pass:'admin',theme:'th-gn',rooms:[],staff:[],config:{alertMin:10,sound:true,sysName:SYS_NAME_DEFAULT,keepDays:90,beepSec:10},history:[],sessions:{},alertNotified:{},mute:{},dailyReports:[]}; DB=Object.assign(base,p,{config:Object.assign(base.config,p.config||{}),sessions:{},alertNotified:{}}); inp.value=''; save(); closeModal(); applyTheme(); applyZoom(); applySysName(); renderAll(); toast('恢复成功'); }); }catch(err){toast('文件解析失败');} }; r.readAsText(f,'UTF-8'); }
+function resetAll(){ openModal(`<div class="mt"><i class="fa fa-exclamation-triangle" style="color:var(--danger)"></i> 恢复默认 / 清空数据</div><div style="font-size:14px;line-height:1.9;color:var(--title)">将<strong>清空</strong>所有房台、分区、管家、历史记录，并恢复默认设置（保留登录密码）。不建议，修补请先导出备份。继续吗？</div><div class="modal-btns"><button class="btn" onclick="closeModal()">取消</button><button class="btn danger" id="resetOk">确认清空</button></div>`); document.getElementById('resetOk').addEventListener('click',()=>{ const u=DB.user,pw=DB.pass; DB={user:u,pass:pw,theme:DB.theme,rooms:[],staff:[],zones:['1区','2区','3区'],config:{alertMin:10,sound:true,sysName:SYS_NAME_DEFAULT,keepDays:90,beepSec:10},history:[],sessions:{},alertNotified:{},mute:{},dailyReports:[],alertFlags:{}}; save(); closeModal(); applyZoom(); renderAll(); toast('已清空'); }); }
 function saveAlertConfig(){ const v=parseInt(document.getElementById('alertMinInput').value); DB.config.alertMin=isNaN(v)?10:Math.max(0,Math.min(180,v)); document.getElementById('alertMinInput').value=DB.config.alertMin; save(); toast('提前提醒已设为 '+DB.config.alertMin+' 分钟'); }
 function saveSoundConfig(){ const sw=document.getElementById('soundSwitch'); DB.config.sound=sw?sw.checked:DB.config.sound; if(!DB.config.sound) stopBeep(); save(); updateSoundIcon(); }
 function toggleSound(){ DB.config.sound=!DB.config.sound; const sw=document.getElementById('soundSwitch'); if(sw) sw.checked=DB.config.sound; if(!DB.config.sound) stopBeep(); save(); updateSoundIcon(); toast(DB.config.sound?'已开启报警提示音':'已关闭报警提示音'); }
@@ -873,7 +1419,9 @@ function saveBeepSec(){ const v=parseInt(document.getElementById('beepSecInput')
 function updateSoundIcon(){ const on=DB.config.sound; const b=document.getElementById('soundToggleBtn'); b.innerHTML=`<i class="fa fa-volume-${on?'up':'mute'}"></i>`; b.classList.toggle('active',on); }
 function renderAll(){ renderStaffBoard(); renderStats(); renderDailyList(); if(loggedIn){ renderRoomMgmt(); renderStaffMgmt(); renderThemeGrid(); } }
 function switchApage(id){ document.querySelectorAll('.apage').forEach(a=>a.classList.remove('active')); document.getElementById(id).classList.add('active'); document.querySelectorAll('#adminTabs button').forEach(b=>b.classList.remove('active')); document.querySelector('#adminTabs button[data-ap="'+id+'"]').classList.add('active'); }
-function enterAdmin(){ goToPage('admin'); checkLogin(()=>{ renderRoomMgmt(); renderStaffMgmt(); renderThemeGrid(); document.getElementById('pwUser').value=DB.user; }); }
+/* V021：先验证密码通过再跳转后台——旧写法先 goToPage('admin') 再弹登录框，
+   导致点「取消」关掉弹窗后后台页已经露出，等于无需密码即可进入后台 */
+function enterAdmin(){ checkLogin(()=>{ goToPage('admin'); renderRoomMgmt(); renderStaffMgmt(); renderThemeGrid(); document.getElementById('pwUser').value=DB.user; }); }
 function goToPage(pg){ document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active')); document.querySelector('[data-page="'+pg+'"]').classList.add('active'); document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById('page-'+pg).classList.add('active');
     if(pg!=='admin'&&loggedIn){ loggedIn=false; updateLockIcon(); }
     if(pg==='stats'){ renderStats(); renderDailyList(); } }
@@ -883,7 +1431,7 @@ document.getElementById('themeBtn').addEventListener('click',()=>openTheme());
 document.getElementById('soundToggleBtn').addEventListener('click',()=>{ toggleSound(); });
 function tickClock(){ const d=new Date(); document.getElementById('clockTime').textContent=pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds()); }
 function tick(){ tickClock(); if(document.getElementById('page-home').classList.contains('active'))renderStaffBoard(); checkAlarms(); }
-load(); pruneKeep(); applySysName(); applyTheme(); updateSoundIcon(); document.getElementById('alertMinInput').value=DB.config.alertMin; document.getElementById('soundSwitch').checked=DB.config.sound; document.getElementById('beepSecInput').value=DB.config.beepSec||10; renderThemeGrid(); renderAll(); tickClock(); setInterval(tick,1000); setInterval(save,10000); renderLocalStatus(); tryLoadLocal();
+load(); pruneKeep(); applySysName(); applyTheme(); applyZoom(); updateSoundIcon(); document.getElementById('alertMinInput').value=DB.config.alertMin; document.getElementById('soundSwitch').checked=DB.config.sound; document.getElementById('beepSecInput').value=DB.config.beepSec||10; document.getElementById('dataDirInput').value=(DB.config&&DB.config.dataDir)||''; renderThemeGrid(); renderAll(); tickClock(); setInterval(tick,1000); setInterval(save,10000); initLocalData();
 </script>
 </body>
 </html>
